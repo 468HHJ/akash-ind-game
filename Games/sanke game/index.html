@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Custom Snake Game</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <h1>🐍 Snake Game</h1>
+
+  <div class="controls">
+    <label>Snake Image: 
+      <input type="file" id="snakeImageInput" accept="image/*">
+    </label>
+    <label>Food Image: 
+      <input type="file" id="foodImageInput" accept="image/*">
+    </label>
+    <label>Background Color:
+      <input type="color" id="bgColorPicker" value="#000000">
+    </label>
+  </div>
+
+  <canvas id="gameCanvas"></canvas>
+
+  <script src="script.js"></script>
+</body>
+</html>
