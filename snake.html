@@ -54,7 +54,8 @@
     const canvas = document.getElementById("gameCanvas");
     const ctx = canvas.getContext("2d");
 
-    let gridSize = 25; 
+    let baseGrid = 25; 
+    let gridSize;
     resizeCanvas();
 
     window.addEventListener("resize", resizeCanvas);
@@ -62,6 +63,9 @@
     function resizeCanvas() {
       canvas.width = window.innerWidth - 10;
       canvas.height = window.innerHeight - 100; 
+
+      // gridSize proportional to canvas size
+      gridSize = Math.floor(Math.min(canvas.width, canvas.height) / 20);
     }
 
     let snake = [{ x: 9 * gridSize, y: 9 * gridSize }];
@@ -71,9 +75,8 @@
 
     let snakeImage = null;
     let foodImage = null;
-    let bgColor = "#000000"; // default black
+    let bgColor = "#000000";
 
-    // image upload
     document.getElementById("snakeImageInput").addEventListener("change", (e) => {
       const file = e.target.files[0];
       if (file) {
@@ -92,14 +95,12 @@
       }
     });
 
-    // background color picker
     document.getElementById("bgColorPicker").addEventListener("input", (e) => {
       bgColor = e.target.value;
     });
 
     document.addEventListener("keydown", changeDirection);
 
-    // swipe controls (mobile)
     let touchStartX = 0;
     let touchStartY = 0;
 
@@ -132,21 +133,23 @@
 
     function drawSnake() {
       snake.forEach((part, index) => {
+        let size = gridSize * 1.5; // snake image bigger
         if (snakeImage) {
-          ctx.drawImage(snakeImage, part.x, part.y, gridSize, gridSize);
+          ctx.drawImage(snakeImage, part.x, part.y, size, size);
         } else {
           ctx.fillStyle = index === 0 ? "lime" : "green";
-          ctx.fillRect(part.x, part.y, gridSize, gridSize);
+          ctx.fillRect(part.x, part.y, size, size);
         }
       });
     }
 
     function drawFood() {
+      let size = gridSize * 1.5; // food image bigger
       if (foodImage) {
-        ctx.drawImage(foodImage, food.x, food.y, gridSize, gridSize);
+        ctx.drawImage(foodImage, food.x, food.y, size, size);
       } else {
         ctx.fillStyle = "red";
-        ctx.fillRect(food.x, food.y, gridSize, gridSize);
+        ctx.fillRect(food.x, food.y, size, size);
       }
     }
 
