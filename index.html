@@ -1,35 +1,48 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>All Games</title>
-<style>
-body { font-family: Arial; background:#111; color:#fff; text-align:center; }
-button { margin: 10px; padding: 10px 20px; font-size:16px; }
-.game-frame { width: 100%; max-width: 600px; height: 400px; margin: 20px auto; border:2px solid #fff; border-radius:10px; }
-iframe { width:100%; height:100%; border:none; }
-</style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Akash Snake Game</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: Arial, sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      background: linear-gradient(to bottom, #0f2027, #203a43, #2c5364);
+      color: white;
+    }
+    h1 {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+    iframe {
+      border: 4px solid white;
+      border-radius: 10px;
+      width: 100%;
+      max-width: 600px;
+      height: 400px;
+    }
+    .footer {
+      margin-top: 20px;
+      font-size: 14px;
+      color: #ccc;
+    }
+  </style>
 </head>
 <body>
-
-<h1>🎮 My Game Collection</h1>
-
-<!-- Game Buttons -->
-<button onclick="loadGame('Games/snake-game/index.html')">Snake Game</button>
-<button onclick="loadGame('Games/game2/index.html')">Game 2</button>
-<button onclick="loadGame('Games/game3/index.html')">Game 3</button>
-
-<!-- Game Display -->
-<div class="game-frame">
-<iframe id="gameFrame" src=""></iframe>
-</div>
-
-<script>
-function loadGame(path) {
-    document.getElementById('gameFrame').src = path;
-}
-</script>
-
+  <h1>Play Snake Game Online</h1>
+  
+  <!-- Snake game iframe -->
+  <iframe src="snake.html" allowfullscreen></iframe>
+  
+  <div class="footer">
+    &copy; 2025 Akash Games
+  </div>
 </body>
 </html>
