@@ -3,46 +3,80 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Akash Snake Game</title>
+  <title>Akash Games</title>
   <style>
-    body {
+    html, body {
       margin: 0;
       padding: 0;
+      height: 100%;
       font-family: Arial, sans-serif;
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      min-height: 100vh;
       background: linear-gradient(to bottom, #0f2027, #203a43, #2c5364);
       color: white;
     }
-    h1 {
-      text-align: center;
+
+    #game-selector {
       margin-bottom: 20px;
+      text-align: center;
     }
+
+    select, button {
+      padding: 10px 20px;
+      margin: 5px;
+      font-size: 16px;
+      border-radius: 5px;
+      border: none;
+    }
+
+    button {
+      background-color: #00b894;
+      color: white;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background-color: #019875;
+    }
+
     iframe {
-      border: 4px solid white;
-      border-radius: 10px;
-      width: 100%;
-      max-width: 600px;
-      height: 400px;
-    }
-    .footer {
-      margin-top: 20px;
-      font-size: 14px;
-      color: #ccc;
+      border: none;
+      width: 100vw;
+      height: 80vh; /* thoda space top selector ke liye */
+      display: none; /* initially hidden */
     }
   </style>
 </head>
 <body>
-  <h1>Play Snake Game Online</h1>
-  
-  <!-- Snake game iframe -->
-  <iframe src="snake.html" allowfullscreen></iframe>
-  
-  <div class="footer">
-    &copy; 2025 Akash Games
+  <h1>Select Your Game</h1>
+
+  <div id="game-selector">
+    <select id="game-dropdown">
+      <option value="" disabled selected>Select a game</option>
+      <option value="snake.html">Snake Game</option>
+      <!-- Aage aur games add kar sakte ho -->
+    </select>
+    <button onclick="loadGame()">Play Game</button>
   </div>
+
+  <iframe id="game-frame" allowfullscreen></iframe>
+
+  <script>
+    function loadGame() {
+      const dropdown = document.getElementById('game-dropdown');
+      const selectedGame = dropdown.value;
+      const iframe = document.getElementById('game-frame');
+
+      if (selectedGame) {
+        iframe.src = selectedGame;
+        iframe.style.display = 'block';
+        document.getElementById('game-selector').style.display = 'none'; // hide selector
+      } else {
+        alert('Please select a game first!');
+      }
+    }
+  </script>
 </body>
 </html>
