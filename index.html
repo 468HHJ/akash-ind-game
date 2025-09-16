@@ -1,59 +1,35 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>🎮 My Games Collection</title>
-  <style>
-    body {
-      background: black;
-      color: white;
-      font-family: Arial, sans-serif;
-      text-align: center;
-      margin: 0;
-      padding: 0;
-    }
-    h1 {
-      margin: 20px 0;
-      color: cyan;
-    }
-    ul {
-      list-style: none;
-      padding: 0;
-    }
-    li {
-      margin: 15px 0;
-    }
-    a {
-      color: yellow;
-      font-size: 20px;
-      text-decoration: none;
-      padding: 10px 20px;
-      border: 2px solid yellow;
-      border-radius: 8px;
-      transition: 0.3s;
-    }
-    a:hover {
-      background: yellow;
-      color: black;
-    }
-    footer {
-      margin-top: 50px;
-      font-size: 14px;
-      color: gray;
-    }
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>All Games</title>
+<style>
+body { font-family: Arial; background:#111; color:#fff; text-align:center; }
+button { margin: 10px; padding: 10px 20px; font-size:16px; }
+.game-frame { width: 100%; max-width: 600px; height: 400px; margin: 20px auto; border:2px solid #fff; border-radius:10px; }
+iframe { width:100%; height:100%; border:none; }
+</style>
 </head>
 <body>
-  <h1>🎮 My Games Collection</h1>
-  <p>Select a game to play 👇</p>
 
-  <ul>
-    <!-- Snake Game link -->
-    <li><a href="Games/snake/index.html">🐍 Play Snake Game</a></li>
-  </ul>
+<h1>🎮 My Game Collection</h1>
 
-  <footer>
-    <p>Powered by HTML • CSS • JS</p>
-  </footer>
+<!-- Game Buttons -->
+<button onclick="loadGame('Games/snake-game/index.html')">Snake Game</button>
+<button onclick="loadGame('Games/game2/index.html')">Game 2</button>
+<button onclick="loadGame('Games/game3/index.html')">Game 3</button>
+
+<!-- Game Display -->
+<div class="game-frame">
+<iframe id="gameFrame" src=""></iframe>
+</div>
+
+<script>
+function loadGame(path) {
+    document.getElementById('gameFrame').src = path;
+}
+</script>
+
 </body>
 </html>
