@@ -16,6 +16,7 @@ button{margin-left:5px;}
 #score{position:absolute;top:10px;left:10px;font-size:20px;}
 #highScore{position:absolute;top:10px;right:10px;font-size:20px;}
 .mobile-controls{display:none;margin-top:10px;}
+.mobile-controls button{width:60px;height:60px;font-size:24px;margin:2px;}
 @media (max-width:600px){.mobile-controls{display:block;}}
 </style>
 </head>
@@ -66,34 +67,35 @@ button{margin-left:5px;}
 
 <script>
 // ---------------- Canvas Setup ----------------
-const canvas=document.getElementById("gameCanvas");
-const ctx=canvas.getContext("2d");
+const canvas = document.getElementById("gameCanvas");
+const ctx = canvas.getContext("2d");
 let gridSize;
 resizeCanvas();
 window.addEventListener("resize", resizeCanvas);
+
 function resizeCanvas(){
-  canvas.width=window.innerWidth-10;
-  canvas.height=window.innerHeight-100;
-  gridSize=Math.floor(Math.min(canvas.width,canvas.height)/20);
+  canvas.width = window.innerWidth - 10;
+  canvas.height = window.innerHeight - 100;
+  gridSize = Math.floor(Math.min(canvas.width, canvas.height) / 20);
 }
 
 // ---------------- Game Variables ----------------
-let snake=[{x:9*gridSize,y:9*gridSize,img:null}], dx=gridSize, dy=0;
-let food=randomFood();
-let snakeImage=null, foodImage=null, bgColor="#000000";
-let score=0, highScore=localStorage.getItem("highScore")||0;
-let gameSpeed=120, gameRunning=true;
-document.getElementById("highScore").textContent=`High Score: ${highScore}`;
+let snake = [{x:9*gridSize, y:9*gridSize, img:null}], dx = gridSize, dy = 0;
+let food = randomFood();
+let snakeImage = null, foodImage = null, bgColor = "#000000";
+let score = 0, highScore = localStorage.getItem("highScore")||0;
+let gameSpeed = 120, gameRunning = true;
+document.getElementById("highScore").textContent = `High Score: ${highScore}`;
 
 // ---------------- Snake & Food Editors ----------------
-let snakeEditImg=new Image(), snakeScale=1, snakeOffsetX=0, snakeOffsetY=0;
-let foodEditImg=new Image(), foodScale=1, foodOffsetX=0, foodOffsetY=0;
+let snakeEditImg = new Image(), snakeOffsetX = 0, snakeOffsetY = 0;
+let foodEditImg = new Image(), foodOffsetX = 0, foodOffsetY = 0;
 
 // Helper function for editor drag + zoom
 function setupEditor(fileInput, editImg, editorDiv, editCanvas, editScaleSlider, applyFunc){
   fileInput.addEventListener("change", e=>{
-    const file=e.target.files[0];
-    if(file){ editImg.src=URL.createObjectURL(file);
+    const file = e.target.files[0];
+    if(file){ editImg.src = URL.createObjectURL(file);
       editImg.onload=()=>{editorDiv.style.display="block"; drawEditor();}
     }
   });
@@ -103,24 +105,32 @@ function setupEditor(fileInput, editImg, editorDiv, editCanvas, editScaleSlider,
     const ctx=editCanvas.getContext("2d");
     ctx.clearRect(0,0,editCanvas.width,editCanvas.height);
     const scale=parseFloat(editScaleSlider.value);
-    const w=editImg.width*scale, h=editImg.height*scale;
-    const x=(editCanvas.width-w)/2+(editorDiv===snakeEditor?snakeOffsetX:foodOffsetX);
-    const y=(editCanvas.height-h)/2+(editorDiv===snakeEditor?snakeOffsetY:foodOffsetY);
-    ctx.drawImage(editImg,x,y,w,h);
+    const w = editImg.width*scale, h = editImg.height*scale;
+    const x = (editCanvas.width-w)/2 + (editorDiv===snakeEditor?snakeOffsetX:foodOffsetX);
+    const y = (editCanvas.height-h)/2 + (editorDiv===snakeEditor?snakeOffsetY:foodOffsetY);
+    ctx.drawImage(editImg, x, y, w, h);
   }
   editCanvas.addEventListener("mousedown", e=>{dragging=true; lastX=e.offsetX; lastY=e.offsetY;});
   editCanvas.addEventListener("mouseup", e=>{dragging=false;});
   editCanvas.addEventListener("mouseleave", e=>{dragging=false;});
-  editCanvas.addEventListener("mousemove", e=>{if(dragging){
-    if(editorDiv===snakeEditor){snakeOffsetX+=e.offsetX-lastX; snakeOffsetY+=e.offsetY-lastY;} 
-    else{foodOffsetX+=e.offsetX-lastX; foodOffsetY+=e.offsetY-lastY;}
-    lastX=e.offsetX; lastY=e.offsetY; drawEditor();}});
+  editCanvas.addEventListener("mousemove", e=>{
+    if(dragging){
+      if(editorDiv===snakeEditor){snakeOffsetX+=e.offsetX-lastX; snakeOffsetY+=e.offsetY-lastY;} 
+      else{foodOffsetX+=e.offsetX-lastX; foodOffsetY+=e.offsetY-lastY;}
+      lastX=e.offsetX; lastY=e.offsetY; drawEditor();
+    }
+  });
   // touch support
-  editCanvas.addEventListener("touchstart", e=>{dragging=true; lastX=e.touches[0].clientX; lastY=e.touches[0].clientY;});
-  editCanvas.addEventListener("touchmove", e=>{if(dragging){
-    if(editorDiv===snakeEditor){snakeOffsetX+=e.touches[0].clientX-lastX; snakeOffsetY+=e.touches[0].clientY-lastY;} 
-    else{foodOffsetX+=e.touches[0].clientX-lastX; foodOffsetY+=e.touches[0].clientY-lastY;}
-    lastX=e.touches[0].clientX; lastY=e.touches[0].clientY; drawEditor(); e.preventDefault();}});
+  editCanvas.addEventListener("touchstart", e=>{
+    dragging=true; lastX=e.touches[0].clientX; lastY=e.touches[0].clientY;
+  });
+  editCanvas.addEventListener("touchmove", e=>{
+    if(dragging){
+      if(editorDiv===snakeEditor){snakeOffsetX+=e.touches[0].clientX-lastX; snakeOffsetY+=e.touches[0].clientY-lastY;} 
+      else{foodOffsetX+=e.touches[0].clientX-lastX; foodOffsetY+=e.touches[0].clientY-lastY;}
+      lastX=e.touches[0].clientX; lastY=e.touches[0].clientY; drawEditor(); e.preventDefault();
+    }
+  });
   editCanvas.addEventListener("touchend", e=>{dragging=false;});
   window[applyFunc]=function(){
     if(editorDiv===snakeEditor){snakeImage=new Image(); snakeImage.src=editCanvas.toDataURL(); editorDiv.style.display="none";}
@@ -145,6 +155,28 @@ function moveDown(){if(dy===0){dx=0;dy=gridSize;}}
 function moveLeft(){if(dx===0){dx=-gridSize;dy=0;}}
 function moveRight(){if(dx===0){dx=gridSize;dy=0;}}
 
+// ---------------- Swipe Controls ----------------
+let touchStartX = 0, touchStartY = 0;
+canvas.addEventListener("touchstart", e => {
+    const touch = e.touches[0];
+    touchStartX = touch.clientX;
+    touchStartY = touch.clientY;
+}, {passive: true});
+
+canvas.addEventListener("touchmove", e => {
+    const touch = e.touches[0];
+    const dxSwipe = touch.clientX - touchStartX;
+    const dySwipe = touch.clientY - touchStartY;
+    if(Math.abs(dxSwipe) > Math.abs(dySwipe)){ // horizontal swipe
+        if(dxSwipe > 0 && dx === 0){ dx = gridSize; dy = 0; }
+        else if(dxSwipe < 0 && dx === 0){ dx = -gridSize; dy = 0; }
+    } else { // vertical swipe
+        if(dySwipe > 0 && dy === 0){ dx = 0; dy = gridSize; }
+        else if(dySwipe < 0 && dy === 0){ dx = 0; dy = -gridSize; }
+    }
+    e.preventDefault();
+}, {passive: false});
+
 // ---------------- Game Functions ----------------
 function drawSnake(){snake.forEach((part,index)=>{
   let size=gridSize*1.5;
@@ -168,7 +200,6 @@ function update(){
     score+=10;
     document.getElementById("score").textContent=`Score: ${score}`;
     if(score>highScore){highScore=score; localStorage.setItem("highScore",highScore); document.getElementById("highScore").textContent=`High Score: ${highScore}`;}
-    // Add new segment image as food image
     snake[0].img=foodImage?foodImage:null;
     food=randomFood();
   } else {snake.pop();}
