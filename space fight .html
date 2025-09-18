@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Space Shooter Game</title>
+  <style>
+    body {
+      margin: 0;
+      overflow: hidden;
+      background: black;
+    }
+    canvas {
+      display: block;
+    }
+  </style>
+</head>
+<body>
+<canvas id="gameCanvas"></canvas>
+
+<script>
+const canvas = document.getElementById("gameCanvas");
+const ctx = canvas.getContext("2d");
+canvas.width = window.innerWidth;
+canvas.height = window.innerHeight;
+
+let keys = {};
+let bullets = [];
+let enemies = [];
+let score = 0;
+
+// === Load Sounds ===
+const bgMusic = new Audio("https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3");
+bgMusic.loop = true;
+bgMusic.volume = 0.4;
+
+const shootSound = new Audio("https://actions.google.com/sounds/v1/cartoon/wood_plank_flicks.ogg");
+
+// === Player ===
+let player = {
+  x: canvas.width / 2 - 25,
+  y: canvas.height - 80,
+  width: 50,
+  height: 50,
+  speed: 7
+};
+
+// === Controls ===
+document.addEventListener("keydown", e => { keys[e.code] = true; });
+document.addEventListener("keyup", e => { keys[e.code] = false; });
+
+// === Touch Controls ===
+canvas.addEventListener("touchmove", e => {
+  let touch = e.touches[0];
+  player.x = touch.clientX - player.width / 2;
+  player.y = touch.clientY - player.height / 2;
+});
+
+// === Start Music on first click/touch ===
+function startAudio() {
+  if (bgMusic.paused) {
+    bgMusic.play().catch(err => console.log("Music blocked:", err));
+  }
+}
+document.addEventListener("click", startAudio, { once: true });
+document.addEventListener("touchstart", startAudio, { once: true });
+
+// === Bullets ===
+function shoot() {
+  bullets.push({ x: player.x + player.width / 2 - 3, y: player.y, width: 6, height: 20 });
+  shootSound.currentTime = 0;
+  shootSound.play().catch(()=>{});
+}
+
+// === Enemies ===
+function spawnEnemy() {
+  enemies.push({ 
+    x: Math.random() * (canvas.width - 40), 
+    y: -40, 
+    width: 40, 
+    height: 40, 
+    speed: 3 
+  });
+}
+setInterval(spawnEnemy, 2000);
+
+// === Check if enemy in front of player ===
+function enemyInFront() {
+  return enemies.some(enemy => {
+    return (
+      enemy.y < player.y && // enemy ऊपर है
+      enemy.x < player.x + player.width &&
+      enemy.x + enemy.width > player.x
+    );
+  });
+}
+
+// === Game Loop ===
+function update() {
+  // Player movement
+  if (keys["ArrowLeft"] && player.x > 0) player.x -= player.speed;
+  if (keys["ArrowRight"] && player.x + player.width < canvas.width) player.x += player.speed;
+  if (keys["ArrowUp"] && player.y > 0) player.y -= player.speed;
+  if (keys["ArrowDown"] && player.y + player.height < canvas.height) player.y += player.speed;
+
+  // Bullets movement
+  bullets.forEach((b, i) => {
+    b.y -= 8;
+    if (b.y < 0) bullets.splice(i, 1);
+  });
+
+  // Enemies movement
+  enemies.forEach((enemy, ei) => {
+    enemy.y += enemy.speed;
+    if (enemy.y > canvas.height) enemies.splice(ei, 1);
+
+    // collision with player
+    if (enemy.x < player.x + player.width &&
+        enemy.x + enemy.width > player.x &&
+        enemy.y < player.y + player.height &&
+        enemy.y + enemy.height > player.y) {
+      alert("Game Over! Score: " + score);
+      document.location.reload();
+    }
+  });
+
+  // Collision bullets with enemies
+  bullets.forEach((b, bi) => {
+    enemies.forEach((enemy, ei) => {
+      if (b.x < enemy.x + enemy.width &&
+          b.x + b.width > enemy.x &&
+          b.y < enemy.y + enemy.height &&
+          b.y + b.height > enemy.y) {
+        bullets.splice(bi, 1);
+        enemies.splice(ei, 1);
+        score += 10;
+      }
+    });
+  });
+
+  // Auto fire only if enemy in front
+  if (enemyInFront()) {
+    if (!player.lastShot || Date.now() - player.lastShot > 500) {
+      shoot();
+      player.lastShot = Date.now();
+    }
+  }
+}
+
+// === Draw ===
+function draw() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  // Player (cyan plane shape)
+  ctx.fillStyle = "cyan";
+  ctx.beginPath();
+  ctx.moveTo(player.x + player.width / 2, player.y);
+  ctx.lineTo(player.x, player.y + player.height);
+  ctx.lineTo(player.x + player.width, player.y + player.height);
+  ctx.closePath();
+  ctx.fill();
+
+  // Bullets
+  ctx.fillStyle = "yellow";
+  bullets.forEach(b => ctx.fillRect(b.x, b.y, b.width, b.height));
+
+  // Enemies
+  ctx.fillStyle = "red";
+  enemies.forEach(enemy => ctx.fillRect(enemy.x, enemy.y, enemy.width, enemy.height));
+
+  // Score
+  ctx.fillStyle = "white";
+  ctx.font = "20px Arial";
+  ctx.fillText("Score: " + score, 20, 30);
+}
+
+// === Loop ===
+function gameLoop() {
+  update();
+  draw();
+  requestAnimationFrame(gameLoop);
+}
+gameLoop();
+</script>
+</body>
+</html>
