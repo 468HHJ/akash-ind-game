@@ -1,19 +1,13 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Space Shooter Game</title>
-  <style>
-    body {
-      margin: 0;
-      overflow: hidden;
-      background: black;
-    }
-    canvas {
-      display: block;
-    }
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Space Shooter Game</title>
+<style>
+  body { margin:0; overflow:hidden; background:black; }
+  canvas { display:block; touch-action: none; }
+</style>
 </head>
 <body>
 <canvas id="gameCanvas"></canvas>
@@ -42,7 +36,8 @@ let player = {
   y: canvas.height - 80,
   width: 50,
   height: 50,
-  speed: 7
+  speed: 7,
+  lastShot: 0
 };
 
 // === Controls ===
@@ -50,17 +45,25 @@ document.addEventListener("keydown", e => { keys[e.code] = true; });
 document.addEventListener("keyup", e => { keys[e.code] = false; });
 
 // === Touch Controls ===
-canvas.addEventListener("touchmove", e => {
+let touchActive = false;
+canvas.addEventListener("touchstart", e => {
+  touchActive = true;
   let touch = e.touches[0];
   player.x = touch.clientX - player.width / 2;
   player.y = touch.clientY - player.height / 2;
 });
+canvas.addEventListener("touchmove", e => {
+  e.preventDefault(); // prevent scrolling
+  if(!touchActive) return;
+  let touch = e.touches[0];
+  player.x = touch.clientX - player.width / 2;
+  player.y = touch.clientY - player.height / 2;
+}, {passive:false});
+canvas.addEventListener("touchend", e => { touchActive = false; });
 
 // === Start Music on first click/touch ===
 function startAudio() {
-  if (bgMusic.paused) {
-    bgMusic.play().catch(err => console.log("Music blocked:", err));
-  }
+  if (bgMusic.paused) bgMusic.play().catch(err => console.log("Music blocked:", err));
 }
 document.addEventListener("click", startAudio, { once: true });
 document.addEventListener("touchstart", startAudio, { once: true });
@@ -88,16 +91,16 @@ setInterval(spawnEnemy, 2000);
 function enemyInFront() {
   return enemies.some(enemy => {
     return (
-      enemy.y < player.y && // enemy ऊपर है
+      enemy.y < player.y &&
       enemy.x < player.x + player.width &&
       enemy.x + enemy.width > player.x
     );
   });
 }
 
-// === Game Loop ===
+// === Game Loop Update ===
 function update() {
-  // Player movement
+  // Player keyboard movement
   if (keys["ArrowLeft"] && player.x > 0) player.x -= player.speed;
   if (keys["ArrowRight"] && player.x + player.width < canvas.width) player.x += player.speed;
   if (keys["ArrowUp"] && player.y > 0) player.y -= player.speed;
@@ -109,7 +112,7 @@ function update() {
     if (b.y < 0) bullets.splice(i, 1);
   });
 
-  // Enemies movement
+  // Enemies movement & collision
   enemies.forEach((enemy, ei) => {
     enemy.y += enemy.speed;
     if (enemy.y > canvas.height) enemies.splice(ei, 1);
@@ -124,7 +127,7 @@ function update() {
     }
   });
 
-  // Collision bullets with enemies
+  // Bullet vs enemy collision
   bullets.forEach((b, bi) => {
     enemies.forEach((enemy, ei) => {
       if (b.x < enemy.x + enemy.width &&
@@ -138,12 +141,10 @@ function update() {
     });
   });
 
-  // Auto fire only if enemy in front
-  if (enemyInFront()) {
-    if (!player.lastShot || Date.now() - player.lastShot > 500) {
-      shoot();
-      player.lastShot = Date.now();
-    }
+  // Auto fire if enemy in front
+  if (enemyInFront() && Date.now() - player.lastShot > 500) {
+    shoot();
+    player.lastShot = Date.now();
   }
 }
 
@@ -151,7 +152,7 @@ function update() {
 function draw() {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-  // Player (cyan plane shape)
+  // Player
   ctx.fillStyle = "cyan";
   ctx.beginPath();
   ctx.moveTo(player.x + player.width / 2, player.y);
@@ -174,7 +175,7 @@ function draw() {
   ctx.fillText("Score: " + score, 20, 30);
 }
 
-// === Loop ===
+// === Main Loop ===
 function gameLoop() {
   update();
   draw();
