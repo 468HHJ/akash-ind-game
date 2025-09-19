@@ -38,8 +38,8 @@ button { padding:10px 20px; background:#ffcc66; border:none; border-radius:5px; 
   <button id="pauseBtn">Pause</button>
 </div>
 
-<!-- Background music (Google Drive se) -->
-<audio id="bgMusic" loop>
+<!-- Background music (Google Drive) -->
+<audio id="bgMusic" preload="auto" loop>
   <source src="https://docs.google.com/uc?export=download&id=1TV-DAjc--k6DgrYx29FdAyH79AMMSGIQ" type="audio/mpeg">
 </audio>
 
@@ -75,6 +75,7 @@ function initGame(){
   initBoard();
   draw();
   setupControls();
+  setupTouchControls();
   requestAnimationFrame(update);
 }
 
@@ -207,12 +208,34 @@ function setupControls(){
     if(!gameStarted){
       gameStarted=true; gameOver=false; initBoard(); score=0;
       document.getElementById('score').textContent='Score: 0';
-      newBlock(); bgMusic.play();
+      newBlock(); 
+      bgMusic.play().catch(err=>console.log("Autoplay blocked:",err));
     }
   });
   document.getElementById('pauseBtn').addEventListener('click',()=>{
     playClick();
     togglePause();
+  });
+}
+
+// Mobile swipe controls
+function setupTouchControls(){
+  let startX=0, startY=0;
+  document.addEventListener('touchstart', e=>{
+    startX=e.touches[0].clientX;
+    startY=e.touches[0].clientY;
+  });
+  document.addEventListener('touchend', e=>{
+    let dx=e.changedTouches[0].clientX-startX;
+    let dy=e.changedTouches[0].clientY-startY;
+    if(!gameStarted||gameOver) return;
+    if(Math.abs(dx)>Math.abs(dy)){
+      if(dx>30) moveBlock(1,0);   // right
+      else if(dx<-30) moveBlock(-1,0); // left
+    } else {
+      if(dy>30) moveBlock(0,1);   // down
+      else if(dy<-30) rotateBlock(); // up = rotate
+    }
   });
 }
 
