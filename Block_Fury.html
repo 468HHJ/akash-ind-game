@@ -6,7 +6,7 @@
 <title>Falling Blocks Game</title>
 <style>
 body {
-  margin:0; padding:0; height:100vh; display:flex; justify-content:center; align-items:center;
+  margin:0; padding:0; height:100vh; display:flex; flex-direction:column; justify-content:center; align-items:center;
   background: linear-gradient(270deg, #ff0080, #ff8c00, #40e0d0, #8a2be2);
   background-size: 400% 400%; animation: gradientBG 15s ease infinite;
   font-family: Arial, sans-serif; overflow:hidden; touch-action:none;
@@ -22,27 +22,8 @@ canvas { background: rgba(0,0,0,0.7); border:3px solid #fff; box-shadow:0 0 20px
   position:absolute; top:10px; left:10px; color:#FFD700; font-size:24px; font-weight:bold;
   text-shadow:2px 2px 5px #000; font-family:'Courier New', monospace;
 }
-/* Controls fixed at bottom */
-#controls {
-  position: fixed;
-  bottom: 15px;
-  left: 50%;
-  transform: translateX(-50%);
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-  justify-content: center;
-}
-button {
-  padding: 12px 20px;
-  background: #ffcc66;
-  border: none;
-  border-radius: 10px;
-  font-size: 16px;
-  cursor: pointer;
-  box-shadow: 0 3px 6px rgba(0,0,0,0.3);
-  min-width: 70px;
-}
+#controls { margin-top:15px; display:flex; gap:10px; justify-content:center;}
+button { padding:10px 20px; background:#ffcc66; border:none; border-radius:5px; font-size:16px; cursor:pointer; box-shadow:0 3px 6px rgba(0,0,0,0.3);}
 </style>
 </head>
 <body>
@@ -51,21 +32,21 @@ button {
   <div id="score">Score: 0</div>
 </div>
 
-<!-- Mobile + Keyboard Controls -->
+<!-- Controls niche rakhe -->
 <div id="controls">
-  <button id="leftBtn">←</button>
-  <button id="rightBtn">→</button>
-  <button id="downBtn">↓</button>
-  <button id="rotateBtn">⟳</button>
   <button id="startBtn">Start</button>
   <button id="pauseBtn">Pause</button>
 </div>
 
-<!-- Music + Sounds -->
+<!-- Background music (Google Drive se) -->
 <audio id="bgMusic" loop>
-  <source src="https://cdn.pixabay.com/download/audio/2025/07/22/audio_377647.mp3?filename=video-games-game-gaming-minecraft-background-music-377647.mp3" type="audio/mpeg">
+  <source src="https://docs.google.com/uc?export=download&id=1TV-DAjc--k6DgrYx29FdAyH79AMMSGIQ" type="audio/mpeg">
 </audio>
+
+<!-- Beep sound -->
 <audio id="beepSound" src="https://cdn.pixabay.com/download/audio/2021/08/04/audio_beep.mp3" preload="auto"></audio>
+
+<!-- Click sound -->
 <audio id="clickSound" src="https://cdn.pixabay.com/download/audio/2021/08/04/audio_click.mp3" preload="auto"></audio>
 
 <script>
@@ -139,7 +120,7 @@ function newBlock(){
   const shape=shapes[Math.floor(Math.random()*shapes.length)];
   const color=colors[Math.floor(Math.random()*colors.length)];
   currentBlock={shape, color, x:Math.floor(COLS/2)-Math.floor(shape[0].length/2), y:0};
-  if(checkCollision()){ gameOver=true; alert('Game Over! Score: '+score);}
+  if(checkCollision()){ gameOver=true; alert('Game Over! Score: '+score); bgMusic.pause();}
 }
 
 function checkCollision(){
@@ -211,7 +192,6 @@ function togglePause(){
 }
 
 function setupControls(){
-  // Keyboard
   document.addEventListener('keydown',e=>{
     if(!gameStarted||gameOver) return;
     switch(e.key){
@@ -222,23 +202,18 @@ function setupControls(){
       case 'p': togglePause(); break;
     }
   });
-  // Touch Buttons
-  document.getElementById('leftBtn').onclick=()=>moveBlock(-1,0);
-  document.getElementById('rightBtn').onclick=()=>moveBlock(1,0);
-  document.getElementById('downBtn').onclick=()=>moveBlock(0,1);
-  document.getElementById('rotateBtn').onclick=()=>rotateBlock();
-  document.getElementById('startBtn').onclick=()=>{
+  document.getElementById('startBtn').addEventListener('click',()=>{
     playClick();
     if(!gameStarted){
       gameStarted=true; gameOver=false; initBoard(); score=0;
       document.getElementById('score').textContent='Score: 0';
       newBlock(); bgMusic.play();
     }
-  };
-  document.getElementById('pauseBtn').onclick=()=>{
+  });
+  document.getElementById('pauseBtn').addEventListener('click',()=>{
     playClick();
     togglePause();
-  };
+  });
 }
 
 function update(timestamp){
