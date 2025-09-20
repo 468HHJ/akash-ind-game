@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Bricks Breaker Mobile</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  canvas { display: block; background: #111; margin: 0 auto; touch-action: none; }
+  body { overflow: hidden; }
+</style>
+</head>
+<body>
+<canvas id="gameCanvas"></canvas>
+
+<audio id="bgMusic" src="https://cdn.pixabay.com/download/audio/2022/03/15/audio_35f0cde34f.mp3?filename=retro-game-loop-110569.mp3" loop></audio>
+<audio id="paddleSound" src="https://cdn.pixabay.com/download/audio/2022/03/04/audio_5e6fa937b0.mp3?filename=blip-03-11166.mp3"></audio>
+<audio id="brickSound" src="https://cdn.pixabay.com/download/audio/2021/09/01/audio_3e4fdf5c71.mp3?filename=coin-6774.mp3"></audio>
+<audio id="lifeLostSound" src="https://cdn.pixabay.com/download/audio/2022/03/15/audio_f1e31a33c3.mp3?filename=arcade-explosion-110612.mp3"></audio>
+
+<script>
+const canvas = document.getElementById("gameCanvas");
+const ctx = canvas.getContext("2d");
+
+// Responsive canvas
+function resizeCanvas() {
+    canvas.width = window.innerWidth * 0.95;
+    canvas.height = window.innerHeight * 0.8;
+}
+resizeCanvas();
+window.addEventListener("resize", resizeCanvas);
+
+// Ball
+let ballRadius = 12;
+let ballX = canvas.width / 2;
+let ballY = canvas.height - 60;
+let dx = 4;
+let dy = -4;
+
+// Paddle
+let paddleHeight = 15;
+let paddleWidth = canvas.width * 0.2;
+let paddleX = (canvas.width - paddleWidth)/2;
+
+// Bricks
+let brickRowCount = 5;
+let brickColumnCount = 7;
+let brickWidth = canvas.width * 0.1;
+let brickHeight = 20;
+let brickPadding = 10;
+let brickOffsetTop = 30;
+let brickOffsetLeft = 30;
+let bricks = [];
+for(let r=0;r<brickRowCount;r++){
+  bricks[r]=[];
+  for(let c=0;c<brickColumnCount;c++){
+    let brickX = c*(brickWidth+brickPadding)+brickOffsetLeft;
+    let brickY = r*(brickHeight+brickPadding)+brickOffsetTop;
+    bricks[r][c]={x:brickX,y:brickY,status:1};
+  }
+}
+
+// Lives
+let lives = 3;
+
+// Controls
+let rightPressed = false;
+let leftPressed = false;
+document.addEventListener("keydown", e => {
+  if(e.key === "Right" || e.key === "ArrowRight") rightPressed=true;
+  if(e.key === "Left" || e.key === "ArrowLeft") leftPressed=true;
+});
+document.addEventListener("keyup", e => {
+  if(e.key === "Right" || e.key === "ArrowRight") rightPressed=false;
+  if(e.key === "Left" || e.key === "ArrowLeft") leftPressed=false;
+});
+
+// Touch controls
+canvas.addEventListener("touchstart", e=>{
+  const touchX = e.touches[0].clientX - canvas.getBoundingClientRect().left;
+  paddleX = touchX - paddleWidth/2;
+});
+canvas.addEventListener("touchmove", e=>{
+  e.preventDefault();
+  const touchX = e.touches[0].clientX - canvas.getBoundingClientRect().left;
+  paddleX = touchX - paddleWidth/2;
+});
+
+// Sounds
+const bgMusic = document.getElementById("bgMusic");
+const paddleSound = document.getElementById("paddleSound");
+const brickSound = document.getElementById("brickSound");
+const lifeLostSound = document.getElementById("lifeLostSound");
+bgMusic.volume = 0.2; bgMusic.play();
+
+// Draw functions
+function drawBall(){
+  ctx.beginPath();
+  ctx.arc(ballX, ballY, ballRadius,0,Math.PI*2);
+  ctx.fillStyle="#ff4757";
+  ctx.fill();
+  ctx.closePath();
+}
+
+function drawPaddle(){
+  ctx.beginPath();
+  ctx.rect(paddleX, canvas.height - paddleHeight, paddleWidth, paddleHeight);
+  ctx.fillStyle="#1e90ff";
+  ctx.fill();
+  ctx.closePath();
+}
+
+function drawBricks(){
+  for(let r=0;r<bricks.length;r++){
+    for(let c=0;c<bricks[r].length;c++){
+      if(bricks[r][c].status===1){
+        ctx.beginPath();
+        ctx.rect(bricks[r][c].x, bricks[r][c].y, brickWidth, brickHeight);
+        ctx.fillStyle="#2ed573";
+        ctx.fill();
+        ctx.closePath();
+      }
+    }
+  }
+}
+
+function drawLives(){
+  ctx.font = "16px Arial";
+  ctx.fillStyle = "#fff";
+  ctx.fillText("Lives: "+lives, canvas.width-80, 20);
+}
+
+function collisionDetection(){
+  for(let r=0;r<bricks.length;r++){
+    for(let c=0;c<bricks[r].length;c++){
+      let b = bricks[r][c];
+      if(b.status===1){
+        if(ballX>b.x && ballX<b.x+brickWidth && ballY>b.y && ballY<b.y+brickHeight){
+          dy=-dy;
+          b.status=0;
+          brickSound.play();
+        }
+      }
+    }
+  }
+}
+
+// Paddle movement
+function movePaddle(){
+  if(rightPressed && paddleX < canvas.width - paddleWidth) paddleX += 7;
+  if(leftPressed && paddleX > 0) paddleX -= 7;
+}
+
+// Main draw loop
+function draw(){
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  drawBricks();
+  drawBall();
+  drawPaddle();
+  drawLives();
+  collisionDetection();
+
+  // Ball hits walls
+  if(ballX+dx>canvas.width-ballRadius || ballX+dx<ballRadius) dx=-dx;
+  if(ballY+dy<ballRadius) dy=-dy;
+
+  // Ball hits paddle
+  if(ballY+dy>canvas.height - paddleHeight - ballRadius){
+    if(ballX>paddleX && ballX<paddleX+paddleWidth){
+      const relativeIntersectX = ballX-(paddleX+paddleWidth/2);
+      const normalized = relativeIntersectX / (paddleWidth/2);
+      const maxBounceAngle = Math.PI*75/180;
+      const bounceAngle = normalized*maxBounceAngle;
+      const speed = Math.sqrt(dx*dx+dy*dy);
+      dx = speed*Math.sin(bounceAngle);
+      dy = -Math.abs(speed*Math.cos(bounceAngle));
+      paddleSound.play();
+    } else {
+      // Life lost
+      lives--;
+      lifeLostSound.play();
+      if(lives===0){
+        alert("Game Over");
+        document.location.reload();
+        return;
+      } else {
+        // Reset ball and paddle
+        ballX = canvas.width/2;
+        ballY = canvas.height - 60;
+        dx = 4 * (Math.random()>0.5?1:-1);
+        dy = -4;
+        paddleX = (canvas.width - paddleWidth)/2;
+      }
+    }
+  }
+
+  // Update ball position
+  ballX += dx;
+  ballY += dy;
+  movePaddle();
+  requestAnimationFrame(draw);
+}
+
+draw();
+</script>
+</body>
+</html>

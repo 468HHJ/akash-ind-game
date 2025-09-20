@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pong Game - Mobile Friendly</title>
+<style>
+    body {
+        margin: 0;
+        background: black;
+        overflow: hidden;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+        flex-direction: column;
+    }
+    canvas {
+        background: #000;
+        display: block;
+    }
+    #controls {
+        margin-top: 10px;
+    }
+    button {
+        padding: 10px 20px;
+        margin: 0 10px;
+        font-size: 16px;
+        cursor: pointer;
+    }
+</style>
+</head>
+<body>
+<audio id="bgMusic" src="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3" loop autoplay></audio>
+
+<canvas id="pong"></canvas>
+<div id="controls">
+    <button onclick="togglePause()">Pause / Resume</button>
+    <button onclick="restartGame()">Restart</button>
+</div>
+
+<script>
+const canvas = document.getElementById("pong");
+const ctx = canvas.getContext("2d");
+
+function resizeCanvas() {
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight * 0.8;
+}
+resizeCanvas();
+window.addEventListener("resize", resizeCanvas);
+
+// Game variables
+let paddleWidth = 20, paddleHeight = canvas.height / 5;
+let ballRadius = 15;
+let player1 = { x: 10, y: canvas.height / 2 - paddleHeight / 2, score: 0, lives: 3 };
+let player2 = { x: canvas.width - paddleWidth - 10, y: canvas.height / 2 - paddleHeight / 2, score: 0, lives: 3 };
+let ball = {
+    x: canvas.width / 2,
+    y: canvas.height / 2,
+    dx: 8 * (Math.random() > 0.5 ? 1 : -1),
+    dy: 8 * (Math.random() > 0.5 ? 1 : -1)
+};
+let paused = false;
+let powerUp = null;
+
+// Sounds
+const hitSound = new Audio("https://www.soundjay.com/button/beep-07.wav");
+const scoreSound = new Audio("https://www.soundjay.com/button/beep-10.wav");
+const powerUpSound = new Audio("https://www.soundjay.com/button/button-3.wav");
+
+// Draw functions
+function drawRect(x, y, w, h, color="white") { ctx.fillStyle = color; ctx.fillRect(x, y, w, h); }
+function drawCircle(x, y, r, color="white") { ctx.fillStyle = color; ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI*2); ctx.closePath(); ctx.fill(); }
+function drawText(text, x, y, color="white", size="50px") { ctx.fillStyle = color; ctx.font = `${size} Arial`; ctx.fillText(text, x, y); }
+
+// Mobile touch controls (multi-touch)
+canvas.addEventListener("touchmove", function(e) {
+    e.preventDefault();
+    for(let i=0; i<e.touches.length; i++){
+        const touch = e.touches[i];
+        if(touch.clientX < canvas.width / 2) player1.y = touch.clientY - paddleHeight / 2;
+        else player2.y = touch.clientY - paddleHeight / 2;
+    }
+}, {passive: false});
+
+// Keyboard controls
+document.addEventListener("keydown", function(e) {
+    const speed = 30;
+    if(e.key === "w") player1.y -= speed;
+    if(e.key === "s") player1.y += speed;
+    if(e.key === "ArrowUp") player2.y -= speed;
+    if(e.key === "ArrowDown") player2.y += speed;
+});
+
+// Collision detection
+function collision(ball, paddle) {
+    return ball.x - ballRadius < paddle.x + paddleWidth &&
+           ball.x + ballRadius > paddle.x &&
+           ball.y + ballRadius > paddle.y &&
+           ball.y - ballRadius < paddle.y + paddleHeight;
+}
+
+// Random power-ups
+function spawnPowerUp() {
+    if(powerUp) return;
+    if(Math.random() < 0.005) {
+        powerUp = {
+            x: Math.random() * (canvas.width - 50) + 25,
+            y: Math.random() * (canvas.height - 50) + 25,
+            type: Math.random() > 0.5 ? "bigPaddle" : "fastBall",
+            size: 20
+        };
+    }
+}
+
+// Update game
+function update() {
+    if(paused) return;
+    ball.x += ball.dx;
+    ball.y += ball.dy;
+
+    // Wall collision
+    if(ball.y - ballRadius < 0 || ball.y + ballRadius > canvas.height) { ball.dy = -ball.dy; hitSound.play(); }
+
+    // Paddle collision
+    if(collision(ball, player1) || collision(ball, player2)) { ball.dx = -ball.dx; hitSound.play(); }
+
+    // Score / Life
+    if(ball.x - ballRadius < 0) { player2.score++; player1.lives--; scoreSound.play(); resetBall(); }
+    if(ball.x + ballRadius > canvas.width) { player1.score++; player2.lives--; scoreSound.play(); resetBall(); }
+
+    // Keep paddles inside canvas
+    player1.y = Math.max(Math.min(player1.y, canvas.height - paddleHeight), 0);
+    player2.y = Math.max(Math.min(player2.y, canvas.height - paddleHeight), 0);
+
+    // Power-up collision
+    spawnPowerUp();
+    if(powerUp && ball.x > powerUp.x - powerUp.size && ball.x < powerUp.x + powerUp.size &&
+       ball.y > powerUp.y - powerUp.size && ball.y < powerUp.y + powerUp.size) {
+        if(powerUp.type === "bigPaddle") paddleHeight *= 1.5;
+        if(powerUp.type === "fastBall") { ball.dx *= 1.5; ball.dy *= 1.5; }
+        powerUpSound.play();
+        powerUp = null;
+    }
+}
+
+// Reset ball
+function resetBall() {
+    ball.x = canvas.width / 2;
+    ball.y = canvas.height / 2;
+    ball.dx = 8 * (Math.random() > 0.5 ? 1 : -1);
+    ball.dy = 8 * (Math.random() > 0.5 ? 1 : -1);
+    paddleHeight = canvas.height / 5;
+}
+
+// Draw everything
+function draw() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    drawRect(player1.x, player1.y, paddleWidth, paddleHeight);
+    drawRect(player2.x, player2.y, paddleWidth, paddleHeight);
+    drawCircle(ball.x, ball.y, ballRadius);
+    drawText(player1.score, canvas.width/4, 50);
+    drawText(player2.score, 3*canvas.width/4, 50);
+    drawText(`♥ ${player1.lives}`, 50, 100, "red", "30px");
+    drawText(`♥ ${player2.lives}`, canvas.width-100, 100, "red", "30px");
+
+    if(powerUp) {
+        drawCircle(powerUp.x, powerUp.y, powerUp.size, powerUp.type==="bigPaddle"?"blue":"yellow");
+    }
+}
+
+// Game loop
+function gameLoop() { update(); draw(); requestAnimationFrame(gameLoop); }
+gameLoop();
+
+// Pause / Resume
+function togglePause() { paused = !paused; }
+
+// Restart
+function restartGame() {
+    player1.score = 0; player2.score = 0;
+    player1.lives = 3; player2.lives = 3;
+    resetBall();
+    paused = false;
+}
+</script>
+</body>
+</html>
