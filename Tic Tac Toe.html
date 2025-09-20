@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tic Tac Toe - AI Difficulty</title>
+<style>
+body { margin:0; background:#222; color:white; font-family:Arial,sans-serif; display:flex; flex-direction:column; align-items:center; justify-content:center; height:100vh;}
+canvas { background:#333; display:block; }
+#info { margin:10px; font-size:18px; text-align:center; }
+button { margin:5px; padding:8px 15px; font-size:16px; cursor:pointer; }
+select { margin:5px; padding:5px; font-size:16px; }
+</style>
+</head>
+<body>
+<div id="info">Score - X:0 | O:0 | Moves:0 | Time:0s</div>
+<button onclick="setMode('1P')">1 Player</button>
+<button onclick="setMode('2P')">2 Player</button>
+<select id="difficulty" onchange="setDifficulty(this.value)">
+  <option value="easy">Easy</option>
+  <option value="medium">Medium</option>
+  <option value="hard">Hard</option>
+</select>
+<button onclick="restartGame()">Restart</button>
+<button onclick="toggleMusic()">Music On/Off</button>
+<canvas id="gameCanvas"></canvas>
+
+<audio id="bgMusic" src="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3" loop autoplay></audio>
+<audio id="moveSound" src="https://www.soundjay.com/button/beep-07.wav"></audio>
+<audio id="winSound" src="https://www.soundjay.com/button/beep-10.wav"></audio>
+<audio id="drawSound" src="https://www.soundjay.com/button/beep-05.wav"></audio>
+
+<script>
+const canvas=document.getElementById('gameCanvas');
+const ctx=canvas.getContext('2d');
+let W=window.innerWidth*0.9;
+let H=window.innerHeight*0.7;
+canvas.width=W;
+canvas.height=H;
+
+let gridSize=3;
+let board=[];
+let currentPlayer='X';
+let mode='1P';
+let moves=0;
+let scoreX=0, scoreO=0;
+let startTime=Date.now();
+let timerInterval;
+let aiDifficulty='easy';
+
+const info=document.getElementById('info');
+const bgMusic=document.getElementById('bgMusic');
+const moveSound=document.getElementById('moveSound');
+const winSound=document.getElementById('winSound');
+const drawSound=document.getElementById('drawSound');
+
+function initBoard(){
+    board=Array(gridSize).fill().map(()=>Array(gridSize).fill(''));
+    currentPlayer='X';
+    moves=0;
+    startTime=Date.now();
+    if(timerInterval) clearInterval(timerInterval);
+    timerInterval=setInterval(updateInfo,1000);
+    drawBoard();
+}
+
+function drawBoard(){
+    ctx.clearRect(0,0,W,H);
+    const cellW=W/gridSize;
+    const cellH=H/gridSize;
+    ctx.strokeStyle='#fff';
+    ctx.lineWidth=3;
+    for(let i=1;i<gridSize;i++){
+        ctx.beginPath();
+        ctx.moveTo(i*cellW,0);
+        ctx.lineTo(i*cellW,H);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.moveTo(0,i*cellH);
+        ctx.lineTo(W,i*cellH);
+        ctx.stroke();
+    }
+    for(let r=0;r<gridSize;r++){
+        for(let c=0;c<gridSize;c++){
+            const val=board[r][c];
+            if(val){
+                ctx.fillStyle=val==='X'?'#f00':'#0f0';
+                ctx.font=`${cellH*0.6}px Arial`;
+                ctx.textAlign='center';
+                ctx.textBaseline='middle';
+                ctx.fillText(val, c*cellW+cellW/2, r*cellH+cellH/2);
+            }
+        }
+    }
+}
+
+function handleClick(x,y){
+    const cellW=W/gridSize;
+    const cellH=H/gridSize;
+    const c=Math.floor(x/cellW);
+    const r=Math.floor(y/cellH);
+    if(board[r][c]!='') return;
+    board[r][c]=currentPlayer;
+    moveSound.play();
+    moves++;
+    drawBoard();
+    if(checkWin(currentPlayer)){
+        winSound.play();
+        currentPlayer==='X'?scoreX++:scoreO++;
+        setTimeout(()=>{ alert(currentPlayer+' Wins!'); initBoard(); },100);
+        return;
+    } else if(moves===gridSize*gridSize){
+        drawSound.play();
+        setTimeout(()=>{ alert('Draw!'); initBoard(); },100);
+        return;
+    }
+    if(mode==='1P' && currentPlayer==='X'){
+        currentPlayer='O';
+        setTimeout(aiMove,300);
+    } else { currentPlayer=currentPlayer==='X'?'O':'X'; }
+    updateInfo();
+}
+
+function aiMove(){
+    let move;
+    if(aiDifficulty==='easy'){
+        move=randomMove();
+    } else if(aiDifficulty==='medium'){
+        move=mediumMove('O');
+    } else {
+        move=minimaxMove();
+    }
+    if(move){
+        board[move.r][move.c]='O';
+        moveSound.play();
+        moves++;
+        drawBoard();
+        if(checkWin('O')){
+            winSound.play();
+            scoreO++;
+            setTimeout(()=>{ alert('O Wins!'); initBoard(); },100);
+            return;
+        } else if(moves===gridSize*gridSize){
+            drawSound.play();
+            setTimeout(()=>{ alert('Draw!'); initBoard(); },100);
+            return;
+        }
+        currentPlayer='X';
+        updateInfo();
+    }
+}
+
+function randomMove(){
+    let empty=[];
+    for(let r=0;r<gridSize;r++){
+        for(let c=0;c<gridSize;c++){
+            if(board[r][c]==='') empty.push({r,c});
+        }
+    }
+    if(empty.length===0) return null;
+    return empty[Math.floor(Math.random()*empty.length)];
+}
+
+function mediumMove(player){
+    // Try win/block
+    for(let r=0;r<gridSize;r++){
+        for(let c=0;c<gridSize;c++){
+            if(board[r][c]===''){
+                board[r][c]=player;
+                if(checkWin(player)){ board[r][c]=''; return {r,c}; }
+                board[r][c]='';
+            }
+        }
+    }
+    let opponent=player==='X'?'O':'X';
+    for(let r=0;r<gridSize;r++){
+        for(let c=0;c<gridSize;c++){
+            if(board[r][c]===''){
+                board[r][c]=opponent;
+                if(checkWin(opponent)){ board[r][c]=''; return {r,c}; }
+                board[r][c]='';
+            }
+        }
+    }
+    return randomMove();
+}
+
+// Simple minimax for Hard AI
+function minimaxMove(){
+    let bestScore=-Infinity;
+    let move=null;
+    for(let r=0;r<gridSize;r++){
+        for(let c=0;c<gridSize;c++){
+            if(board[r][c]===''){
+                board[r][c]='O';
+                let score=minimax(false);
+                board[r][c]='';
+                if(score>bestScore){ bestScore=score; move={r,c}; }
+            }
+        }
+    }
+    return move;
+}
+
+function minimax(isMax){
+    if(checkWin('O')) return 10;
+    if(checkWin('X')) return -10;
+    if(board.flat().every(cell=>cell!=='')) return 0;
+
+    let scores=[];
+    for(let r=0;r<gridSize;r++){
+        for(let c=0;c<gridSize;c++){
+            if(board[r][c]===''){
+                board[r][c]=isMax?'O':'X';
+                let score=minimax(!isMax);
+                scores.push(score);
+                board[r][c]='';
+            }
+        }
+    }
+    return isMax?Math.max(...scores):Math.min(...scores);
+}
+
+function checkWin(player){
+    for(let r=0;r<gridSize;r++) if(board[r].every(cell=>cell===player)) return true;
+    for(let c=0;c<gridSize;c++) if(board.every(row=>row[c]===player)) return true;
+    if(board.every((row,i)=>row[i]===player)) return true;
+    if(board.every((row,i)=>row[gridSize-i-1]===player)) return true;
+    return false;
+}
+
+function restartGame(){ initBoard(); }
+function setMode(m){ mode=m; initBoard(); }
+function setDifficulty(d){ aiDifficulty=d; }
+function toggleMusic(){ bgMusic.paused?bgMusic.play():bgMusic.pause(); }
+
+function updateInfo(){
+    const elapsed=Math.floor((Date.now()-startTime)/1000);
+    info.textContent=`Score - X:${scoreX} | O:${scoreO} | Moves:${moves} | Time:${elapsed}s`;
+}
+
+canvas.addEventListener('click',e=>{
+    const rect=canvas.getBoundingClientRect();
+    const x=e.clientX-rect.left;
+    const y=e.clientY-rect.top;
+    handleClick(x,y);
+});
+
+canvas.addEventListener('touchstart',e=>{
+    e.preventDefault();
+    const rect=canvas.getBoundingClientRect();
+    const touch=e.touches[0];
+    const x=touch.clientX-rect.left;
+    const y=touch.clientY-rect.top;
+    handleClick(x,y);
+},{passive:false});
+
+window.addEventListener('resize',()=>{
+    W=window.innerWidth*0.9;
+    H=window.innerHeight*0.7;
+    canvas.width=W;
+    canvas.height=H;
+    drawBoard();
+});
+
+initBoard();
+</script>
+</body>
+</html>

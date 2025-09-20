@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Minesweeper - Music Update</title>
+<style>
+body { margin:0; padding:0; background:#222; color:white; font-family:Arial,sans-serif; display:flex; flex-direction:column; align-items:center; }
+canvas { background:#333; display:block; margin-top:10px; }
+#info { margin:10px; font-size:18px; text-align:center; }
+button, select { margin:5px; padding:5px 10px; font-size:16px; cursor:pointer; }
+</style>
+</head>
+<body>
+<div id="info">Mines: 0 | Moves: 0 | Time: 0s</div>
+<select id="difficulty" onchange="setDifficulty(this.value)">
+  <option value="easy">Easy</option>
+  <option value="medium">Medium</option>
+  <option value="hard">Hard</option>
+</select>
+<button onclick="restartGame()">Restart</button>
+<button onclick="toggleMusic()">Switch Music</button>
+<canvas id="gameCanvas"></canvas>
+
+<!-- Background Music -->
+<audio id="bgMusic1" src="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-4.mp3" loop autoplay></audio>
+<audio id="bgMusic2" src="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3" loop></audio>
+
+<!-- Sound Effects -->
+<audio id="clickSound" src="https://www.soundjay.com/button/beep-07.wav"></audio>
+<audio id="flagSound" src="https://www.soundjay.com/button/button-10.wav"></audio>
+<audio id="explosionSound" src="https://www.soundjay.com/button/button-3.mp3"></audio>
+<audio id="winSound" src="https://www.soundjay.com/button/beep-10.wav"></audio>
+
+<script>
+const canvas=document.getElementById('gameCanvas');
+const ctx=canvas.getContext('2d');
+let W=window.innerWidth*0.95;
+let H=window.innerHeight*0.7;
+canvas.width=W;
+canvas.height=H;
+
+let rows=9, cols=9, mines=10;
+let board=[], revealed=[], flagged=[];
+let cellSize, moves=0, startTime=Date.now();
+let timerInterval, difficulty='easy';
+
+const info=document.getElementById('info');
+const bgMusic1=document.getElementById('bgMusic1');
+const bgMusic2=document.getElementById('bgMusic2');
+const clickSound=document.getElementById('clickSound');
+const flagSound=document.getElementById('flagSound');
+const explosionSound=document.getElementById('explosionSound');
+const winSound=document.getElementById('winSound');
+
+let currentMusic=1;
+
+function toggleMusic(){
+    if(currentMusic===1){
+        bgMusic1.pause();
+        bgMusic2.play();
+        currentMusic=2;
+    } else {
+        bgMusic2.pause();
+        bgMusic1.play();
+        currentMusic=1;
+    }
+}
+
+function setDifficulty(d){
+    difficulty=d;
+    if(d==='easy'){ rows=9; cols=9; mines=10; }
+    else if(d==='medium'){ rows=16; cols=16; mines=40; }
+    else{ rows=16; cols=30; mines=99; }
+    restartGame();
+}
+
+function initBoard(){
+    board=Array(rows).fill().map(()=>Array(cols).fill(0));
+    revealed=Array(rows).fill().map(()=>Array(cols).fill(false));
+    flagged=Array(rows).fill().map(()=>Array(cols).fill(false));
+    moves=0;
+    startTime=Date.now();
+    if(timerInterval) clearInterval(timerInterval);
+    timerInterval=setInterval(drawBoard,1000/30);
+    placeMines();
+    calculateNumbers();
+    drawBoard();
+}
+
+function placeMines(){
+    let count=0;
+    while(count<mines){
+        let r=Math.floor(Math.random()*rows);
+        let c=Math.floor(Math.random()*cols);
+        if(board[r][c]!==-1){ board[r][c]=-1; count++; }
+    }
+}
+
+function calculateNumbers(){
+    for(let r=0;r<rows;r++){
+        for(let c=0;c<cols;c++){
+            if(board[r][c]===-1) continue;
+            let count=0;
+            for(let dr=-1;dr<=1;dr++){
+                for(let dc=-1;dc<=1;dc++){
+                    let nr=r+dr, nc=c+dc;
+                    if(nr>=0 && nr<rows && nc>=0 && nc<cols && board[nr][nc]===-1) count++;
+                }
+            }
+            board[r][c]=count;
+        }
+    }
+}
+
+function drawBoard(){
+    ctx.clearRect(0,0,W,H);
+    cellSize=Math.min(W/cols,H/rows);
+    for(let r=0;r<rows;r++){
+        for(let c=0;c<cols;c++){
+            let x=c*cellSize;
+            let y=r*cellSize;
+            ctx.strokeStyle="#fff";
+            ctx.strokeRect(x,y,cellSize,cellSize);
+            if(revealed[r][c]){
+                if(board[r][c]===-1){
+                    ctx.fillStyle='red';
+                    ctx.fillRect(x,y,cellSize,cellSize);
+                } else {
+                    ctx.fillStyle='#999';
+                    ctx.fillRect(x,y,cellSize,cellSize);
+                    if(board[r][c]>0){
+                        ctx.fillStyle='black';
+                        ctx.font=`${cellSize*0.6}px Arial`;
+                        ctx.textAlign='center';
+                        ctx.textBaseline='middle';
+                        ctx.fillText(board[r][c], x+cellSize/2, y+cellSize/2);
+                    }
+                }
+            } else if(flagged[r][c]){
+                ctx.fillStyle='yellow';
+                ctx.fillRect(x,y,cellSize,cellSize);
+            } else {
+                ctx.fillStyle='#555';
+                ctx.fillRect(x,y,cellSize,cellSize);
+            }
+        }
+    }
+    info.textContent=`Mines: ${mines} | Moves: ${moves} | Time: ${Math.floor((Date.now()-startTime)/1000)}s`;
+}
+
+function revealCell(r,c){
+    if(r<0 || r>=rows || c<0 || c>=cols || revealed[r][c] || flagged[r][c]) return;
+    revealed[r][c]=true;
+    moves++;
+    clickSound.play();
+    if(board[r][c]===-1){
+        explosionSound.play();
+        drawBoard();
+        setTimeout(()=>alert('Game Over!'),100);
+        return;
+    }
+    if(board[r][c]===0){
+        for(let dr=-1;dr<=1;dr++){
+            for(let dc=-1;dc<=1;dc++){
+                if(dr!==0 || dc!==0) revealCell(r+dr,c+dc);
+            }
+        }
+    }
+    if(checkWin()){
+        winSound.play();
+        drawBoard();
+        setTimeout(()=>alert('You Win!'),100);
+    }
+}
+
+function checkWin(){
+    for(let r=0;r<rows;r++){
+        for(let c=0;c<cols;c++){
+            if(board[r][c]!==-1 && !revealed[r][c]) return false;
+        }
+    }
+    return true;
+}
+
+canvas.addEventListener('click',e=>{
+    const rect=canvas.getBoundingClientRect();
+    const x=e.clientX-rect.left;
+    const y=e.clientY-rect.top;
+    const r=Math.floor(y/cellSize);
+    const c=Math.floor(x/cellSize);
+    revealCell(r,c);
+    drawBoard();
+});
+
+canvas.addEventListener('touchstart',e=>{
+    e.preventDefault();
+    const rect=canvas.getBoundingClientRect();
+    const touch=e.touches[0];
+    const x=touch.clientX-rect.left;
+    const y=touch.clientY-rect.top;
+    const r=Math.floor(y/cellSize);
+    const c=Math.floor(x/cellSize);
+    revealCell(r,c);
+    drawBoard();
+},{passive:false});
+
+canvas.addEventListener('contextmenu',e=>{
+    e.preventDefault();
+    const rect=canvas.getBoundingClientRect();
+    const x=e.clientX-rect.left;
+    const y=e.clientY-rect.top;
+    const r=Math.floor(y/cellSize);
+    const c=Math.floor(x/cellSize);
+    flagged[r][c]=!flagged[r][c];
+    flagSound.play();
+    drawBoard();
+});
+
+window.addEventListener('resize',()=>{
+    W=window.innerWidth*0.95;
+    H=window.innerHeight*0.7;
+    canvas.width=W;
+    canvas.height=H;
+    drawBoard();
+});
+
+function restartGame(){ initBoard(); }
+
+initBoard();
+</script>
+</body>
+</html>

@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Memory Match Cards Game</title>
+<style>
+body { margin:0; padding:0; overflow:hidden; background:#222; }
+canvas { display:block; margin:0 auto; background:#333; }
+#info {
+    position:absolute; top:10px; left:50%; transform:translateX(-50%);
+    color:white; font-family:Arial,sans-serif; font-size:18px;
+    text-align:center;
+}
+button {
+    position:absolute; top:50px; left:50%; transform:translateX(-50%);
+    padding:8px 16px; font-size:16px; cursor:pointer;
+}
+</style>
+</head>
+<body>
+<div id="info">Score: 0 | Moves: 0 | Time: 0s</div>
+<button onclick="restartGame()">Restart Game</button>
+<canvas id="gameCanvas"></canvas>
+
+<audio id="bgMusic" src="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3" loop autoplay></audio>
+<audio id="flipSound" src="https://www.soundjay.com/button/beep-07.wav"></audio>
+<audio id="matchSound" src="https://www.soundjay.com/button/beep-10.wav"></audio>
+
+<script>
+const canvas = document.getElementById('gameCanvas');
+const ctx = canvas.getContext('2d');
+let W = window.innerWidth;
+let H = window.innerHeight;
+canvas.width = W;
+canvas.height = H;
+
+const info = document.getElementById('info');
+const flipSound = document.getElementById('flipSound');
+const matchSound = document.getElementById('matchSound');
+
+let cards=[], flipped=[], matched=[];
+let rows=4, cols=4;
+let cardWidth, cardHeight;
+let score=0, moves=0, startTime, timerInterval;
+
+function initCards(){
+    const total = rows*cols;
+    const values = [];
+    for(let i=1;i<=total/2;i++){ values.push(i); values.push(i); }
+    values.sort(()=>Math.random()-0.5);
+    cards=[];
+    for(let r=0;r<rows;r++){
+        for(let c=0;c<cols;c++){
+            cards.push({r,c,value:values.pop(),x:0,y:0,width:0,height:0});
+        }
+    }
+}
+
+function drawCards(){
+    ctx.clearRect(0,0,W,H);
+    cardWidth=W/cols - 20;
+    cardHeight=H/rows - 20;
+    cards.forEach(card=>{
+        card.x = card.r*cardWidth + 10*(card.r+1);
+        card.y = card.c*cardHeight + 10*(card.c+1);
+        card.width = cardWidth;
+        card.height = cardHeight;
+        ctx.fillStyle = matched.includes(card) || flipped.includes(card)?'#0f0':'#fff';
+        ctx.fillRect(card.x,card.y,card.width,card.height);
+        if(flipped.includes(card) || matched.includes(card)){
+            ctx.fillStyle='#000';
+            ctx.font=`${cardHeight/2}px Arial`;
+            ctx.textAlign='center';
+            ctx.textBaseline='middle';
+            ctx.fillText(card.value,card.x+card.width/2,card.y+card.height/2);
+        }
+    });
+    info.textContent = `Score: ${score} | Moves: ${moves} | Time: ${Math.floor((Date.now()-startTime)/1000)}s`;
+}
+
+function getCardAt(x,y){
+    return cards.find(card=>x>=card.x && x<=card.x+card.width && y>=card.y && y<=card.y+card.height);
+}
+
+canvas.addEventListener('click',e=>{
+    const rect = canvas.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+    handleClick(x,y);
+});
+
+// Mobile touch support
+canvas.addEventListener('touchstart',e=>{
+    e.preventDefault();
+    const rect = canvas.getBoundingClientRect();
+    const touch = e.touches[0];
+    const x = touch.clientX - rect.left;
+    const y = touch.clientY - rect.top;
+    handleClick(x,y);
+}, {passive:false});
+
+function handleClick(x,y){
+    if(flipped.length>=2) return;
+    const card = getCardAt(x,y);
+    if(!card || flipped.includes(card) || matched.includes(card)) return;
+    flipped.push(card);
+    flipSound.play();
+    drawCards();
+    if(flipped.length===2){
+        moves++;
+        if(flipped[0].value===flipped[1].value){
+            matched.push(...flipped);
+            score+=10;
+            matchSound.play();
+            flipped=[];
+            if(matched.length===cards.length){
+                setTimeout(()=>alert('You Win!'),100);
+            }
+        }else{
+            setTimeout(()=>{ flipped=[]; drawCards(); },500);
+        }
+    }
+}
+
+function restartGame(){
+    score=0; moves=0; matched=[]; flipped=[];
+    initCards();
+    startTime=Date.now();
+    if(timerInterval) clearInterval(timerInterval);
+    timerInterval = setInterval(drawCards,1000/30);
+}
+
+window.addEventListener('resize',()=>{
+    W=window.innerWidth; H=window.innerHeight;
+    canvas.width=W; canvas.height=H;
+    drawCards();
+});
+
+restartGame();
+</script>
+</body>
+</html>

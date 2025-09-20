@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sudoku Touch-Friendly</title>
+<style>
+body {
+    margin:0;
+    background:#f4f4f9;
+    font-family:Arial,sans-serif;
+    display:flex;
+    flex-direction:column;
+    justify-content:center;
+    align-items:center;
+    height:100vh;
+}
+.container { text-align:center; }
+.grid {
+    display:grid;
+    grid-template-columns: repeat(9, 1fr);
+    gap:3px;
+    max-width:90vw;
+    margin:10px auto;
+}
+.cell {
+    position:relative;
+    width:100%;
+    padding-top:100%;
+    background:#fff;
+    border:1px solid #ccc;
+    font-size:1.5em;
+}
+.cell.selected { border:2px solid #3a86ff; }
+.cell span {
+    position:absolute;
+    top:0; left:0; width:100%; height:100%;
+    display:flex; justify-content:center; align-items:center;
+    font-size:1.5em;
+}
+#numpad { display:flex; flex-wrap:wrap; justify-content:center; max-width:300px; margin-top:10px; }
+#numpad button {
+    width:30px; height:30px;
+    margin:5px; font-size:18px;
+    cursor:pointer;
+}
+button#clear { width:64px; }
+</style>
+</head>
+<body>
+<div class="container">
+    <div class="grid" id="sudoku-grid"></div>
+    <div id="numpad">
+        <button onclick="inputNumber(1)">1</button>
+        <button onclick="inputNumber(2)">2</button>
+        <button onclick="inputNumber(3)">3</button>
+        <button onclick="inputNumber(4)">4</button>
+        <button onclick="inputNumber(5)">5</button>
+        <button onclick="inputNumber(6)">6</button>
+        <button onclick="inputNumber(7)">7</button>
+        <button onclick="inputNumber(8)">8</button>
+        <button onclick="inputNumber(9)">9</button>
+        <button id="clear" onclick="inputNumber(0)">Clear</button>
+    </div>
+    <div>
+        <button onclick="startGame()">Restart</button>
+    </div>
+</div>
+
+<script>
+const size=9;
+let board=[];
+let selectedCell=null;
+
+function generateSudoku(){
+    let arr = Array(size).fill().map(()=>Array(size).fill(0));
+    for(let i=0;i<20;i++){
+        let r=Math.floor(Math.random()*9);
+        let c=Math.floor(Math.random()*9);
+        let val=Math.floor(Math.random()*9)+1;
+        arr[r][c]=val;
+    }
+    return arr;
+}
+
+function renderBoard(){
+    const grid=document.getElementById('sudoku-grid');
+    grid.innerHTML='';
+    board.forEach((row,r)=>{
+        row.forEach((cell,c)=>{
+            const div=document.createElement('div');
+            div.classList.add('cell');
+            const span=document.createElement('span');
+            span.textContent=cell||'';
+            div.appendChild(span);
+            div.addEventListener('click',()=>{
+                if(selectedCell) selectedCell.classList.remove('selected');
+                selectedCell=div;
+                div.classList.add('selected');
+            });
+            grid.appendChild(div);
+            div.dataset.row=r;
+            div.dataset.col=c;
+        });
+    });
+}
+
+function inputNumber(num){
+    if(!selectedCell) return;
+    const r=parseInt(selectedCell.dataset.row);
+    const c=parseInt(selectedCell.dataset.col);
+    board[r][c]=num;
+    selectedCell.firstChild.textContent=num||'';
+}
+
+function startGame(){
+    board=generateSudoku();
+    selectedCell=null;
+    renderBoard();
+}
+
+startGame();
+</script>
+</body>
+</html>
