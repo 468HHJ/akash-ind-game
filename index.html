@@ -4,89 +4,338 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Akash Games</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <style>
-    html, body {
+    * {
       margin: 0;
       padding: 0;
-      height: 100%;
-      font-family: Arial, sans-serif;
+      box-sizing: border-box;
+    }
+    
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
+      color: white;
+      min-height: 100vh;
       display: flex;
       flex-direction: column;
       align-items: center;
-      justify-content: center;
-      background: linear-gradient(to bottom, #0f2027, #203a43, #2c5364);
-      color: white;
+      padding: 20px;
+      position: relative;
     }
-
-    #game-selector {
-      margin-bottom: 20px;
+    
+    .header {
       text-align: center;
+      margin-bottom: 30px;
+      width: 100%;
     }
-
-    select, button {
-      padding: 10px 20px;
-      margin: 5px;
+    
+    .logo {
+      font-size: 2.8rem;
+      font-weight: bold;
+      margin-bottom: 10px;
+      background: linear-gradient(to right, #00b894, #00cec9);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      text-shadow: 0 2px 10px rgba(0, 184, 148, 0.3);
+    }
+    
+    .tagline {
+      font-size: 1.2rem;
+      opacity: 0.8;
+      margin-bottom: 20px;
+    }
+    
+    .game-container {
+      width: 100%;
+      max-width: 1000px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    
+    .game-selector {
+      background: rgba(255, 255, 255, 0.1);
+      backdrop-filter: blur(10px);
+      padding: 25px;
+      border-radius: 15px;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+      width: 100%;
+      max-width: 600px;
+      margin-bottom: 20px;
+      transition: all 0.3s ease;
+    }
+    
+    .selector-row {
+      display: flex;
+      gap: 15px;
+      margin-bottom: 20px;
+    }
+    
+    select {
+      flex: 1;
+      padding: 12px 15px;
       font-size: 16px;
-      border-radius: 5px;
-      border: none;
+      border-radius: 8px;
+      border: 2px solid rgba(255, 255, 255, 0.2);
+      background: rgba(0, 0, 0, 0.3);
+      color: white;
+      outline: none;
+      transition: border 0.3s ease;
     }
-
+    
+    select:focus {
+      border-color: #00b894;
+    }
+    
     button {
-      background-color: #00b894;
+      padding: 12px 25px;
+      font-size: 16px;
+      font-weight: bold;
+      border-radius: 8px;
+      border: none;
+      background: linear-gradient(to right, #00b894, #00cec9);
       color: white;
       cursor: pointer;
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
     }
-
+    
     button:hover {
-      background-color: #019875;
+      transform: translateY(-2px);
+      box-shadow: 0 5px 15px rgba(0, 184, 148, 0.4);
     }
-
+    
+    button:active {
+      transform: translateY(0);
+    }
+    
+    #back-button {
+      display: none;
+      position: absolute;
+      top: 20px;
+      left: 20px;
+      background: rgba(255, 255, 255, 0.1);
+      backdrop-filter: blur(10px);
+    }
+    
+    #back-button:hover {
+      background: rgba(255, 255, 255, 0.2);
+    }
+    
     iframe {
       border: none;
-      width: 100vw;
-      height: 80vh; /* thoda space top selector ke liye */
+      width: 100%;
+      height: 70vh;
+      border-radius: 12px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
       display: none; /* initially hidden */
+    }
+    
+    .game-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 20px;
+      width: 100%;
+      max-width: 1000px;
+      margin-top: 30px;
+    }
+    
+    .game-card {
+      background: rgba(255, 255, 255, 0.1);
+      backdrop-filter: blur(10px);
+      border-radius: 12px;
+      padding: 20px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+    }
+    
+    .game-card:hover {
+      transform: translateY(-5px);
+      background: rgba(255, 255, 255, 0.15);
+      box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+    }
+    
+    .game-icon {
+      font-size: 2.5rem;
+      margin-bottom: 15px;
+      color: #00b894;
+    }
+    
+    .game-title {
+      font-weight: bold;
+      margin-bottom: 5px;
+    }
+    
+    .game-desc {
+      font-size: 0.9rem;
+      opacity: 0.8;
+    }
+    
+    .footer {
+      margin-top: 40px;
+      text-align: center;
+      opacity: 0.7;
+      font-size: 0.9rem;
+    }
+    
+    /* Responsive design */
+    @media (max-width: 768px) {
+      .game-grid {
+        grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+      }
+      
+      .selector-row {
+        flex-direction: column;
+      }
     }
   </style>
 </head>
 <body>
-  <h1>Select Your Game</h1>
+  <button id="back-button" onclick="goBackToMenu()">
+    <i class="fas fa-arrow-left"></i> Back to Games
+  </button>
 
-  <div id="game-selector">
-    <select id="game-dropdown">
-      <option value="" disabled selected>Select a game</option>
-      <option value="snake.html">Snake Game</option>
-      <option value="space_fight.html">Space Fight Game</option>
-      <option value="Block_Fury.html">bloc Game</option>
-      <option value="Pong Game 2 player.html">pong game 2</option>
-      <option value="Flappy Bird Clone.html">flapy ball game</option>
-      <option value="Brick Breaker.html">bricks game </option>  
-       <option value="pogo.html">pogo Game</option>
-       <option value="Sudoku.html">sudoku Game</option>
-       <option value="Tic Tac Toe.html">TOC TPC TOE Game </option>
-       <option value="Memory Match Cards.html">memory match cards Game</option>
-       <option value="2048 Number Puzzle.html">2048 number puzzle Game</option>
-      <!-- Aage aur games add kar sakte ho -->
-    </select>
-    <button onclick="loadGame()">Play Game</button>
+  <div class="header">
+    <div class="logo">Akash Games</div>
+    <div class="tagline">Your ultimate gaming destination</div>
   </div>
 
-  <iframe id="game-frame" allowfullscreen></iframe>
+  <div class="game-container">
+    <div class="game-selector">
+      <div class="selector-row">
+        <select id="game-dropdown">
+          <option value="" disabled selected>Select a game</option>
+          <option value="snake.html">Snake Game</option>
+          <option value="space_fight.html">Space Fight Game</option>
+          <option value="Block_Fury.html">Block Fury</option>
+          <option value="Pong Game 2 player.html">Pong Game (2 Player)</option>
+          <option value="Flappy Bird Clone.html">Flappy Bird</option>
+          <option value="Brick Breaker.html">Brick Breaker</option>  
+          <option value="pogo.html">Pogo Game</option>
+          <option value="Sudoku.html">Sudoku</option>
+          <option value="Tic Tac Toe.html">Tic Tac Toe</option>
+          <option value="Memory Match Cards.html">Memory Match</option>
+          <option value="2048 Number Puzzle.html">2048 Puzzle</option>
+        </select>
+        <button onclick="loadGame()">
+          <i class="fas fa-play"></i> Play Game
+        </button>
+      </div>
+    </div>
+
+    <iframe id="game-frame" allowfullscreen></iframe>
+  </div>
+
+  <div class="game-grid">
+    <div class="game-card" onclick="selectGame('snake.html')">
+      <div class="game-icon"><i class="fas fa-slither"></i></div>
+      <div class="game-title">Snake Game</div>
+      <div class="game-desc">Classic snake adventure</div>
+    </div>
+    
+    <div class="game-card" onclick="selectGame('space_fight.html')">
+      <div class="game-icon"><i class="fas fa-space-shuttle"></i></div>
+      <div class="game-title">Space Fight</div>
+      <div class="game-desc">Epic space battles</div>
+    </div>
+    
+    <div class="game-card" onclick="selectGame('Block_Fury.html')">
+      <div class="game-icon"><i class="fas fa-cubes"></i></div>
+      <div class="game-title">Block Fury</div>
+      <div class="game-desc">Break all the blocks</div>
+    </div>
+    
+    <div class="game-card" onclick="selectGame('Pong Game 2 player.html')">
+      <div class="game-icon"><i class="fas fa-table-tennis"></i></div>
+      <div class="game-title">Pong Game</div>
+      <div class="game-desc">2 Player classic</div>
+    </div>
+    
+    <div class="game-card" onclick="selectGame('Flappy Bird Clone.html')">
+      <div class="game-icon"><i class="fas fa-dove"></i></div>
+      <div class="game-title">Flappy Bird</div>
+      <div class="game-desc">Fly through obstacles</div>
+    </div>
+    
+    <div class="game-card" onclick="selectGame('Brick Breaker.html')">
+      <div class="game-icon"><i class="fas fa-border-style"></i></div>
+      <div class="game-title">Brick Breaker</div>
+      <div class="game-desc">Break all bricks</div>
+    </div>
+  </div>
+
+  <div class="footer">
+    <p>© 2023 Akash Games. All games are property of their respective owners.</p>
+  </div>
 
   <script>
+    // Track if a game is currently loaded
+    let gameLoaded = false;
+    
+    function selectGame(gameUrl) {
+      document.getElementById('game-dropdown').value = gameUrl;
+      loadGame();
+    }
+    
     function loadGame() {
       const dropdown = document.getElementById('game-dropdown');
       const selectedGame = dropdown.value;
       const iframe = document.getElementById('game-frame');
+      const gameSelector = document.querySelector('.game-selector');
+      const gameGrid = document.querySelector('.game-grid');
+      const backButton = document.getElementById('back-button');
+      const footer = document.querySelector('.footer');
 
       if (selectedGame) {
         iframe.src = selectedGame;
         iframe.style.display = 'block';
-        document.getElementById('game-selector').style.display = 'none'; // hide selector
+        gameSelector.style.display = 'none';
+        gameGrid.style.display = 'none';
+        footer.style.display = 'none';
+        backButton.style.display = 'block';
+        
+        // Add to browser history
+        history.pushState({gameLoaded: true}, '');
+        gameLoaded = true;
       } else {
         alert('Please select a game first!');
       }
     }
+    
+    function goBackToMenu() {
+      const iframe = document.getElementById('game-frame');
+      const gameSelector = document.querySelector('.game-selector');
+      const gameGrid = document.querySelector('.game-grid');
+      const backButton = document.getElementById('back-button');
+      const footer = document.querySelector('.footer');
+      
+      iframe.style.display = 'none';
+      iframe.src = '';
+      gameSelector.style.display = 'block';
+      gameGrid.style.display = 'grid';
+      footer.style.display = 'block';
+      backButton.style.display = 'none';
+      
+      // Update history
+      history.back();
+      gameLoaded = false;
+    }
+    
+    // Handle browser back button
+    window.addEventListener('popstate', function(event) {
+      if (gameLoaded) {
+        goBackToMenu();
+      }
+    });
+    
+    // Initialize - hide back button on page load
+    document.getElementById('back-button').style.display = 'none';
   </script>
 </body>
 </html>
