@@ -44,8 +44,8 @@
     iframe {
       border: none;
       width: 100vw;
-      height: 80vh; /* thoda space top selector ke liye */
-      display: none; /* initially hidden */
+      height: 80vh;
+      display: none;
     }
   </style>
 </head>
@@ -57,16 +57,15 @@
       <option value="" disabled selected>Select a game</option>
       <option value="snake.html">Snake Game</option>
       <option value="space_fight.html">Space Fight Game</option>
-      <option value="Block_Fury.html">bloc Game</option>
-      <option value="Pong Game 2 player.html">pong game 2</option>
-      <option value="Flappy Bird Clone.html">flapy ball game</option>
-      <option value="Brick Breaker.html">bricks game </option>  
-       <option value="pogo.html">pogo Game</option>
-       <option value="Sudoku.html">sudoku Game</option>
-       <option value="Tic Tac Toe.html">TOC TPC TOE Game </option>
-       <option value="Memory Match Cards.html">memory match cards Game</option>
-       <option value="2048 Number Puzzle.html">2048 number puzzle Game</option>
-      <!-- Aage aur games add kar sakte ho -->
+      <option value="Block_Fury.html">Block Game</option>
+      <option value="Pong Game 2 player.html">Pong Game 2</option>
+      <option value="Flappy Bird Clone.html">Flappy Ball Game</option>
+      <option value="Brick Breaker.html">Bricks Game</option>  
+      <option value="pogo.html">Pogo Game</option>
+      <option value="Sudoku.html">Sudoku Game</option>
+      <option value="Tic Tac Toe.html">Tic Tac Toe Game</option>
+      <option value="Memory Match Cards.html">Memory Match Cards Game</option>
+      <option value="2048 Number Puzzle.html">2048 Number Puzzle Game</option>
     </select>
     <button onclick="loadGame()">Play Game</button>
   </div>
@@ -74,19 +73,47 @@
   <iframe id="game-frame" allowfullscreen></iframe>
 
   <script>
-    function loadGame() {
-      const dropdown = document.getElementById('game-dropdown');
-      const selectedGame = dropdown.value;
-      const iframe = document.getElementById('game-frame');
+    const iframe = document.getElementById('game-frame');
+    const selector = document.getElementById('game-selector');
+    const dropdown = document.getElementById('game-dropdown');
 
-      if (selectedGame) {
-        iframe.src = selectedGame;
-        iframe.style.display = 'block';
-        document.getElementById('game-selector').style.display = 'none'; // hide selector
-      } else {
+    function loadGame(gamePath) {
+      const selectedGame = gamePath || dropdown.value;
+
+      if (!selectedGame) {
         alert('Please select a game first!');
+        return;
       }
+
+      iframe.src = selectedGame;
+      iframe.style.display = 'block';
+      selector.style.display = 'none';
+
+      // Update URL without reloading page
+      history.pushState({ game: selectedGame }, '', '?game=' + encodeURIComponent(selectedGame));
     }
+
+    // Check URL on page load
+    window.addEventListener('load', () => {
+      const params = new URLSearchParams(window.location.search);
+      const game = params.get('game');
+      if (game) {
+        // Load game directly from URL
+        loadGame(game);
+      }
+    });
+
+    // Handle browser back/forward
+    window.addEventListener('popstate', (event) => {
+      if (event.state && event.state.game) {
+        // Load the game from state
+        loadGame(event.state.game);
+      } else {
+        // No game => show selector
+        iframe.style.display = 'none';
+        selector.style.display = 'block';
+      }
+    });
   </script>
 </body>
 </html>
